@@ -78,6 +78,12 @@ async def main(sizes,
         {
             'num_prompts': 30000,
             'use_oracle': 0,
+            'use_token_id': 0,
+            'algorithm': 'pdp'
+        },
+        {
+            'num_prompts': 30000,
+            'use_oracle': 0,
             'use_token_id': 1,
             'algorithm': 'scheduler'
         }
@@ -144,7 +150,7 @@ async def main(sizes,
         return log_file_name
 
 
-    def wait_for_server_ready(log_file_name, timeout=600):
+    def wait_for_server_ready(log_file_name, timeout=900):
         """Wait until the server is ready or a timeout occurs."""
         for _ in range(timeout):
             if os.path.exists(log_file_name):
@@ -259,6 +265,12 @@ async def main(sizes,
         client_config = copy.deepcopy(client_conf)
         server_config = copy.deepcopy(server_conf)
         server_config['client_algorithm'] = client_config['algorithm']
+        if server_config['client_algorithm'] == 'pdp':
+            server_config['eviction_algorithm'] = 'pdp'
+            server_config['args'] = re.sub(
+                r'--eviction_algorithm\s+\S+',
+                '--eviction_algorithm pdp',
+                server_config['args'])
         if server_config['client_algorithm'] in ('ml', 'scheduler'):
             server_config['size'] -= 250 # 2GB
         print("Starting server configuration:", server_config)
@@ -312,8 +324,8 @@ if __name__ == "__main__":
 # varying cache size
 if __name__ == "__main__":
     for alg in ['ml']:
-        for dataset in ['sharegpt', 'lmsys', 'chatbot']:
+        for dataset in ['sharegpt']:
             for sizes in [[8000]]:
                 for scales in [[1]]:
-                    asyncio.run(main(sizes, scales, alg, dataset, 'size++'))
-
+                    asyncio.run(main(sizes, scales, alg, dataset, 'size++',
+                                    client_algorithms=['lru', 'pdp', 'scheduler']))

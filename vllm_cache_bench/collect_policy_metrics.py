@@ -7,7 +7,7 @@ from statistics import mean
 from typing import Any, Dict, Iterable, List, Optional
 
 
-POLICIES = ("ml", "lru", "rrip", "fifo", "scheduler")
+POLICIES = ("ml", "lru", "rrip", "fifo", "pdp", "scheduler")
 BENCHMARKS = ("sharegpt", "lmsys", "chatbot", "tay")
 METRICS = (
     "hit_ratio",

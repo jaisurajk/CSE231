@@ -159,7 +159,11 @@ class PrefixCachingBlockAllocator(BlockAllocator):
         self.evictor: Evictor = make_evictor(eviction_algorithm, eviction_algorithm_config)
         if hasattr(self.evictor, "set_capacity"):
             self.evictor.set_capacity(num_blocks)
-        if eviction_algorithm != 'lru':
+        should_start_predictor = (
+            eviction_algorithm != 'lru' and
+            (not hasattr(self.evictor, "should_predict_cache_hint") or
+             self.evictor.should_predict_cache_hint()))
+        if should_start_predictor:
             # Start the worker thread
             self.t_predictor_thread = threading.Thread(target=self.predictor_worker, daemon=True)
             self.t_predictor_thread.start()
@@ -678,10 +682,19 @@ class PrefixCachingBlockAllocator(BlockAllocator):
 
     def observe_cache_accesses(self, block_hashes: List[int],
                                cache_hint: dict) -> None:
-        if not hasattr(self.evictor, "observe_cache_access"):
+        has_batch_observer = hasattr(self.evictor, "observe_cache_accesses")
+        has_single_observer = hasattr(self.evictor, "observe_cache_access")
+        if not has_batch_observer and not has_single_observer:
             return
         if (hasattr(self.evictor, "should_observe_cache_accesses") and
                 not self.evictor.should_observe_cache_accesses()):
+            return
+        if has_batch_observer:
+            real_hits = [
+                block_hash in self._cached_blocks for block_hash in block_hashes
+            ]
+            self.evictor.observe_cache_accesses(block_hashes, cache_hint,
+                                                real_hits)
             return
         for block_hash in block_hashes:
             self.evictor.observe_cache_access(

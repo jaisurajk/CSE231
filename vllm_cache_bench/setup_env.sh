@@ -42,7 +42,7 @@ pip install -U pip
 pip install -U "setuptools<81" setuptools_scm wheel packaging ninja
 pip install -U psutil
 pip install -U pandas
-pip install -U numpy
+pip install "numpy==1.26.4"
 echo "Installing vLLM (precompiled wheel)..."
 cd "${ROOT_DIR}/vllm"
 export VLLM_TARGET_DEVICE=cuda
@@ -54,7 +54,7 @@ export SETUPTOOLS_SCM_PRETEND_VERSION=0.7.3
 export SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VLLM=0.7.3
 
 pip install -e . --no-build-isolation
-pip install -U "transformers>=4.48.2" "tokenizers>=0.19.1"
+pip install "transformers==4.48.2" "tokenizers==0.21.4" "numpy==1.26.4"
 
 echo "Downloading ShareGPT dataset..."
 cd "${ROOT_DIR}"
